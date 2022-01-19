@@ -1,0 +1,195 @@
+package alex;
+
+import errors.GestionErroresExp;
+import java.util.ArrayList;
+import constructorast.ClaseLexica;
+
+%%
+%cup
+%line
+%char
+%class AnalizadorLexicoExp
+%type UnidadLexica
+%unicode
+%public
+
+%{
+  public boolean hayError;
+  private ArrayList<String> listaErrores;
+  private int cont;
+  private ALexOperations ops;
+  private GestionErroresExp errores;
+  public String lexema() {return yytext();}
+  public int fila() {return yyline+1;}
+  public int col() {return yychar+1 - cont;}
+  public void fijaGestionErrores(GestionErroresExp errores) {
+   this.errores = errores;
+  }
+  public void setFileName(String file){
+    this.ops.setFileName(file);
+    }
+ public void printErrores(){
+ for(String s: listaErrores)
+    System.out.println(s);
+    }
+%}
+
+%eofval{
+  return ops.ul(ClaseLexica.EOF,"<EOF>");
+%eofval}
+
+%init{
+  hayError = false;
+  listaErrores = new ArrayList<String>();
+  ops = new ALexOperations(this);
+  errores = new GestionErroresExp(); // Será sobreescrito por el init del Sintactico
+%init}
+
+
+letraMinuscula = [a-z]
+letraMayuscula = [A-Z]
+letra = ({letraMinuscula}|{letraMayuscula})
+digitoPositivo = [1-9]
+digitoCero = 0
+digito = ({digitoPositivo}|{digitoCero})
+parteEntera = (0|{digitoPositivo}{digito}*)
+parteDecimal = {digito}+
+separador = [ \t\r\b\n]
+nl = [\n]
+caracter = \'[^\n\"\']\'
+string   = \"[^\n\"\']*\" 
+comentario = //[^\n]*
+numeroEntero = {parteEntera}
+numeroReal = {parteEntera}\.{parteDecimal}
+identificador = {letra}({letra}|{digito})*
+operadorSuma = \+
+masmas = \+\+
+menosmenos = \-\-
+dirmem = \&
+punt = \.
+operadorResta = \-
+operadorRestaBis = {operadorResta}\:
+operadorMultiplicacion = (\*|\∗)
+operadorDivision = /
+operadorDivisionBis = {operadorDivision}\:
+modulo = %
+moduloBis = {modulo}\:
+exponente = "^"
+exponenteBis = {exponente}\:
+simboloIgual = \=
+igualLogico = {simboloIgual}{simboloIgual}
+notIgualLogico = \!\=
+menor = <
+mayor = >
+menorIgual = <\=
+mayorIgual = >\=
+orLogico = \|\|
+andLogico = \&\&
+notLogico = \!
+parentesisApertura = \(
+parentesisCierre = \)
+corcheteApertura = \[
+corcheteCierre = \]
+llaveApertura = \{
+llaveCierre = \}
+puntocoma = ;
+dospuntos = :
+coma = ,
+
+return = return
+class = class
+int = int
+float = float
+bool = bool
+char = char
+void = void
+true = true
+false = false
+enum = enum
+using = using
+if = if
+else = else
+while = while
+for = for
+print = print
+prunt = prunt
+continue = continue
+break = break
+new = new
+switch = switch
+case = case
+default = default
+include = #include
+%%
+{nl}                      {cont += col();}
+{separador}               {}
+{comentario}              {}
+{return}                  {return ops.ul(ClaseLexica.RETURN, lexema());} 
+{class}                   {return ops.ul(ClaseLexica.CLASS, lexema());} 
+{int}                     {return ops.ul(ClaseLexica.INT, lexema());} 
+{float}                   {return ops.ul(ClaseLexica.FLOAT, lexema());} 
+{bool}                    {return ops.ul(ClaseLexica.BOOL, lexema());} 
+{char}                    {return ops.ul(ClaseLexica.CHAR, lexema());} 
+{void}                    {return ops.ul(ClaseLexica.VOID, lexema());} 
+{true}                    {return ops.ul(ClaseLexica.TRUE, "true");}
+{false}                   {return ops.ul(ClaseLexica.FALSE, "false");}
+{enum}                    {return ops.ul(ClaseLexica.ENUM, lexema());} 
+{using}                   {return ops.ul(ClaseLexica.USING, lexema());}
+{if}                      {return ops.ul(ClaseLexica.IF, lexema());}  
+{else}                    {return ops.ul(ClaseLexica.ELSE, lexema());} 
+{while}                   {return ops.ul(ClaseLexica.WHILE, lexema());} 
+{for}                     {return ops.ul(ClaseLexica.FOR, lexema());} 
+{print}                   {return ops.ul(ClaseLexica.PRINT, lexema());} 
+{prunt}                   {return ops.ul(ClaseLexica.PRUNT, lexema());} 
+{continue}                {return ops.ul(ClaseLexica.CONTINUE, lexema());} 
+{break}                   {return ops.ul(ClaseLexica.BREAK, lexema());} 
+{new}                     {return ops.ul(ClaseLexica.NEW, lexema());} 
+{switch}                  {return ops.ul(ClaseLexica.SWITCH, lexema());} 
+{case}                    {return ops.ul(ClaseLexica.CASE, lexema());} 
+{default}                 {return ops.ul(ClaseLexica.DEFAULT, lexema());} 
+{include}                 {return ops.ul(ClaseLexica.INCLUDE, lexema());} 
+
+{numeroEntero}            {return ops.ul(ClaseLexica.NUMENT, lexema());}
+{numeroReal}              {return ops.ul(ClaseLexica.NUMREAL, lexema());}
+{operadorSuma}            {return ops.ul(ClaseLexica.MAS, "+");}
+{masmas}                  {return ops.ul(ClaseLexica.MASMAS, lexema());}
+{menosmenos}              {return ops.ul(ClaseLexica.MENOSMENOS, lexema());}
+{dirmem}                  {return ops.ul(ClaseLexica.DIRMEM, lexema());}
+{punt}                    {return ops.ul(ClaseLexica.PUNT, lexema());}
+{puntocoma}               {return ops.ul(ClaseLexica.PUNTOCOMA, lexema());}
+{dospuntos}               {return ops.ul(ClaseLexica.DOSPUNTOS, lexema());}
+{coma}                    {return ops.ul(ClaseLexica.COMA, lexema());}
+
+{operadorResta}           {return ops.ul(ClaseLexica.MINUS, "-");}
+{operadorRestaBis}        {return ops.ul(ClaseLexica.MINUSBIS, "-");}
+{operadorMultiplicacion}  {return ops.ul(ClaseLexica.POR, "*");}
+{modulo}                  {return ops.ul(ClaseLexica.MOD, "%");}
+{moduloBis}               {return ops.ul(ClaseLexica.MODBIS, "%:");}
+{operadorDivision}        {return ops.ul(ClaseLexica.DIV, "/");}
+{operadorDivisionBis}     {return ops.ul(ClaseLexica.DIVBIS, "/:");}
+{exponente}               {return ops.ul(ClaseLexica.EXP, lexema());}
+{exponenteBis}            {return ops.ul(ClaseLexica.EXPBIS, lexema());}
+{simboloIgual}            {return ops.ul(ClaseLexica.IGUAL, "=");}
+{igualLogico}             {return ops.ul(ClaseLexica.IGUALLOG, "==");}
+{notIgualLogico}          {return ops.ul(ClaseLexica.NOTIGUALLOG, "!=");}
+{menor}                   {return ops.ul(ClaseLexica.MENOR, "<");}
+{menorIgual}              {return ops.ul(ClaseLexica.MENORIGUAL, "<=");}
+{mayor}                   {return ops.ul(ClaseLexica.MAYOR, ">");}
+{mayorIgual}              {return ops.ul(ClaseLexica.MAYORIGUAL, ">=");}
+{orLogico}                {return ops.ul(ClaseLexica.OR, "||");}
+{andLogico}               {return ops.ul(ClaseLexica.AND, "&&");}
+{notLogico}               {return ops.ul(ClaseLexica.NOT, "!");}
+{parentesisApertura}      {return ops.ul(ClaseLexica.PAP,"(");}
+{parentesisCierre}        {return ops.ul(ClaseLexica.PCIERRE,")");}
+{corcheteApertura}        {return ops.ul(ClaseLexica.CAP,"[");}
+{corcheteCierre}          {return ops.ul(ClaseLexica.CCIERRE,"]");}
+{llaveApertura}           {return ops.ul(ClaseLexica.LAP,"{");}
+{llaveCierre}             {return ops.ul(ClaseLexica.LCIERRE,"}");}
+{identificador}           {return ops.ul(ClaseLexica.IDEN, lexema());}
+
+{string}                  {String s = lexema(); s = s.substring(1,s.length() - 1);
+                             return ops.ul(ClaseLexica.STRING, s);} 
+{caracter}                {return ops.ul(ClaseLexica.CARACTER, lexema());} 
+[^]                       {listaErrores.add(errores.errorLexico(fila(), col(),lexema())); hayError = true; } 
+
+
